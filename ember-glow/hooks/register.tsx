@@ -378,20 +378,24 @@ ${wheelsMarkup(list, now)}
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const { name } = await read($, palette)
-    const { look, unpainted } = lookFor(name)
 
-    if (unpainted !== undefined) {
-      $.ui.toast(unpainted)
-    }
-    const set = await $.theme.set(look)
+    // "off" leaves the app's own theme alone
+    if (name !== 'off') {
+      const { look, unpainted } = lookFor(name)
 
-    if (!set.isDrawn) {
-      $.ui.status(set.reason)
+      if (unpainted !== undefined) {
+        $.ui.toast(unpainted)
+      }
+      const set = await $.theme.set(look)
+
+      if (!set.isDrawn) {
+        $.ui.status(set.reason)
+      }
     }
     await $.command.register({ name: 'crab', description: 'Turn the crab off or on for this chat: /crab, /crab on, /crab off' })
     await $.command.register({
       name: 'look',
-      description: `Switch this chat's look: ${Object.keys(PALETTES).join(', ')} (e.g. /look teal). /look alone lists them.`,
+      description: `Switch this chat's look: ${Object.keys(PALETTES).join(', ')} (e.g. /look teal), or /look off for no theme. /look alone lists them.`,
     })
 
     // A fresh session: the crab starts walking, and falls asleep after five quiet minutes.
@@ -517,6 +521,11 @@ export const register: Register = on => {
     const { name } = await read($, palette)
     const now = await $.clock.now()
 
+    // theme off: no glow or burst either
+    if (name === 'off') {
+      return next(e)
+    }
+
     return <Svg source={scene(mood, m.until > now, paletteFor(name))} alt="A soft orange glow slowly pulsing at the corners" isInteractive />
   })
 
@@ -574,8 +583,16 @@ export const register: Register = on => {
     const want = e.args.trim().toLowerCase()
     const names = Object.keys(PALETTES)
 
+    // /look off: back to the app's own theme (this also clears any other mod's theme until it reloads)
+    if (want === 'off') {
+      await update($, palette, () => ({ name: 'off' }))
+      await $.theme.clear()
+
+      return { text: 'Theme off for this chat: the app is back to its own look. Type /look ember (or another name) to bring a look back.' }
+    }
+
     if (!(want in PALETTES)) {
-      const lines = names.map(n => `  ${n}: ${PALETTES[n]?.label}`).join('\n')
+      const lines = [...names.map(n => `  ${n}: ${PALETTES[n]?.label}`), '  off: no theme, the app\'s own look'].join('\n')
 
       return { text: `Looks for this chat (type /look <name>):\n${lines}` }
     }
