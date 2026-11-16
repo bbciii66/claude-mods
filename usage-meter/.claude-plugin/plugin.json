@@ -1,0 +1,1 @@
+{ "name": "usage-meter", "version": "0.2.0", "description": "Shows your Claude plan usage (5-hour and weekly limits with reset countdowns) plus your limit resets and cloud credit above the prompt box.", "author": { "name": "Ben" }, "types": "./types/index.d.ts" }

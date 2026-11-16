@@ -1,0 +1,8 @@
+{
+  "name": "bens-mods",
+  "owner": { "name": "Ben" },
+  "plugins": [
+    { "name": "ember-glow", "source": "./ember-glow" },
+    { "name": "usage-meter", "source": "./usage-meter" }
+  ]
+}
