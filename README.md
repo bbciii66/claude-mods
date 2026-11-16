@@ -30,6 +30,7 @@ Each helper agent Claude runs gets its own small star wheel at the right end of 
 | `/look` | Lists the looks. |
 | `/look <name>` | Switches this chat's look: `ember` (default), `teal`, `violet`, `blue` or `tokyo`. |
 | `/look off` | Back to the app's own look, with no theme. |
+| `/mode dark`, `/mode light`, `/mode auto` | Forces the dark or light half of the look in this chat. `auto` follows the app. |
 | `/crab` | Turns the crab off or back on for this chat. `/crab on` and `/crab off` also work. |
 
 Each look has a dark and a light version, with its own glow, burst and crab colors. `tokyo` is a night-city look with neon cyan, violet and pink, pink glow rings, yellow text for Claude and cyan for your own messages. The choice is saved per chat, so a new chat starts in `ember`. With the crab off and no helpers running, the strip disappears and the chat gets its room back. Helper wheels still show while helpers run.

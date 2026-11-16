@@ -25,6 +25,9 @@ export type Milestone = { until: number; label: string }
 // The look this chat uses: 'ember', 'teal', 'violet', 'blue' or 'tokyo'.
 export type PaletteChoice = { name: string }
 
+// Which half of the look to draw in this chat: 'auto' follows the app, or force 'dark' or 'light'.
+export type SchemeChoice = { value: string }
+
 // Whether the crab is shown in this chat (/crab on, /crab off). The helper wheels stay either way.
 export type CrabSwitch = { isOn: boolean }
 
@@ -36,6 +39,7 @@ declare module 'claude-code' {
       milestone: Shaped<Milestone>
       palette: Shaped<PaletteChoice>
       crabSwitch: Shaped<CrabSwitch>
+      scheme: Shaped<SchemeChoice>
     }
   }
 }

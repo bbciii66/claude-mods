@@ -31,9 +31,10 @@ const PALETTES: Record<string, Palette> = {
     accent: '#d97757',
     glow: '#e8855f',
     hi: '#f0a47f',
+    userInk: '#f8f4ee',
     roles: { danger: '#c8483c', success: '#6f9a55', warning: '#c9902b', pro: '#a5799c' },
     light: { 'surface-0': '#f3ebe0', 'surface-1': '#f8f2e8', 'surface-2': '#fcf8f1', 'text-primary': '#2b2119', 'text-secondary': '#54463a', 'text-muted': '#6b5b4d' },
-    dark: { 'surface-0': '#171310', 'surface-1': '#1f1915', 'surface-2': '#27201a', 'surface-3': '#2e261f', 'text-primary': '#f3e9dd', 'text-secondary': '#d2c4b3', 'text-muted': '#ad9d8a' },
+    dark: { 'surface-0': '#171310', 'surface-1': '#1f1915', 'surface-2': '#27201a', 'surface-3': '#2e261f', 'text-primary': '#f7b58f', 'text-secondary': '#d8a88c', 'text-muted': '#b09580' },
   },
   teal: {
     label: 'Teal (deep sea-green)',
@@ -78,17 +79,24 @@ const PALETTES: Record<string, Palette> = {
 const paletteFor = (name: string): Palette => PALETTES[name] ?? (PALETTES.ember as Palette)
 
 // The theme for a palette, with the line that would stop Desktop painting it, if any.
-const lookFor = (name: string): { look: ThemeSetArgs; unpainted: string | undefined } => {
+// `scheme` 'dark' or 'light' draws just that half of the look; 'auto' gives both and follows the app.
+const lookFor = (name: string, scheme = 'auto'): { look: ThemeSetArgs; unpainted: string | undefined } => {
   const p = paletteFor(name)
+  const forced = scheme === 'dark' || scheme === 'light' ? scheme : undefined
   const { theme, problems } = makeColors({
     label: `Ember glow: ${name}`,
     roles: { accent: p.accent, ...p.roles },
-    light: { gray: { anchors: p.light } },
-    dark: { gray: { anchors: p.dark } },
+    ...(forced === 'dark' ? {} : { light: { gray: { anchors: p.light } } }),
+    ...(forced === 'light' ? {} : { dark: { gray: { anchors: p.dark } } }),
+    ...(forced === undefined ? {} : { only: forced }),
   })
 
   return {
-    look: { colors: theme, backdrop: { scene: 'ember-glow', glass: false } },
+    look: {
+      colors: theme,
+      backdrop: { scene: 'ember-glow', glass: false },
+      ...(forced === undefined ? {} : { overrideColorScheme: forced }),
+    },
     unpainted: problems.find(line => line.startsWith("Desktop won't paint")),
   }
 }
@@ -103,6 +111,9 @@ const MAX_WHEELS = 4
 
 // Which look this chat uses. It lives in the session, so another chat keeps its own.
 const palette = atom({ plugin: 'ember-glow', key: 'palette' } as const, { name: 'ember' }, { shape: 'palette-1' })
+
+// Dark or light for this chat, or 'auto' to follow the app.
+const schemeChoice = atom({ plugin: 'ember-glow', key: 'scheme' } as const, { value: 'auto' }, { shape: 'scheme-1' })
 
 // Whether the crab shows in this chat; the helper wheels stay either way.
 const crabSwitch = atom({ plugin: 'ember-glow', key: 'crabSwitch' } as const, { isOn: true }, { shape: 'crabswitch-1' })
@@ -381,7 +392,7 @@ export const register: Register = on => {
 
     // "off" leaves the app's own theme alone
     if (name !== 'off') {
-      const { look, unpainted } = lookFor(name)
+      const { look, unpainted } = lookFor(name, (await read($, schemeChoice)).value)
 
       if (unpainted !== undefined) {
         $.ui.toast(unpainted)
@@ -392,6 +403,7 @@ export const register: Register = on => {
         $.ui.status(set.reason)
       }
     }
+    await $.command.register({ name: 'mode', description: "Dark or light for this chat: /mode dark, /mode light, /mode auto (follows the app)" })
     await $.command.register({ name: 'crab', description: 'Turn the crab off or on for this chat: /crab, /crab on, /crab off' })
     await $.command.register({
       name: 'look',
@@ -578,6 +590,26 @@ export const register: Register = on => {
     return { text: next ? 'The crab is back.' : 'The crab is off for this chat. Helper wheels will still show while helpers run. Type /crab to bring him back.' }
   })
 
+  // /mode dark | light | auto: which half of the look this chat draws. Auto follows the app.
+  on('command.run', { command: 'mode' }, async ($, e) => {
+    const want = e.args.trim().toLowerCase()
+    const current = (await read($, schemeChoice)).value
+
+    if (want !== 'dark' && want !== 'light' && want !== 'auto') {
+      return { text: `This chat is on "${current}". Type /mode dark, /mode light or /mode auto (auto follows the app).` }
+    }
+    const { name } = await read($, palette)
+    await update($, schemeChoice, () => ({ value: want }))
+
+    if (name === 'off') {
+      return { text: `Saved "${want}", but the theme is off for this chat. Type /look ember (or another name) first.` }
+    }
+    const { look } = lookFor(name, want)
+    const set = await $.theme.set(look)
+
+    return { text: set.isDrawn ? `This chat is now set to ${want}.` : `Saved ${want} for this chat, but nothing draws it here: ${set.reason}` }
+  })
+
   // /look <name>: switch this chat's palette. It is kept in the session, so other chats keep their own.
   on('command.run', { command: 'look' }, async ($, e) => {
     const want = e.args.trim().toLowerCase()
@@ -596,7 +628,7 @@ export const register: Register = on => {
 
       return { text: `Looks for this chat (type /look <name>):\n${lines}` }
     }
-    const { look, unpainted } = lookFor(want)
+    const { look, unpainted } = lookFor(want, (await read($, schemeChoice)).value)
     await update($, palette, () => ({ name: want }))
     const set = await $.theme.set(look)
 
