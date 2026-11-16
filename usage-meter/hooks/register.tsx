@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Extras, Limit } from '../types'
-import { applyArgs, bar, extrasLine, label, line, ordered, tone, untilText } from './meter'
+import { applyArgs, bar, extrasLine, label, line, ordered, tone, untilText, withFiveHour } from './meter'
 
 const limits = atom({ plugin: 'usage-meter', key: 'limits' } as const, [] as Limit[])
 const now = atom({ plugin: 'usage-meter', key: 'now' } as const, 0)
@@ -25,16 +25,16 @@ async function refresh($: EngineInterface) {
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const r = await next(e)
-    // first run: start from what Ben's usage page showed on 2026-10-12; /meter updates or clears it
+    // first run starts empty; /meter fills it in
     let saved = (await $.store.get('extras')) as Extras | undefined
     if (saved === undefined) {
-      saved = { resets: { count: 1, expires: '2026-10-22' }, credit: { left: 242, total: 250, expires: '2026-11-05' }, updated: '2026-10-12' }
+      saved = {}
       await $.store.set('extras', saved)
     }
     await update($, extras, () => saved)
     await $.command.register({
       name: 'meter',
-      description: 'Usage meter: enter your limit resets and cloud credit, e.g. /meter resets 1 10.22  or  /meter credit 242 250 11.5',
+      description: 'Usage meter: enter your limit resets and cloud credit, e.g. /meter resets 2  or  /meter fable 2  or  /meter credit 242 250 11.5',
     })
     await refresh($)
     $.clock.every(60_000, () => {
@@ -64,7 +64,7 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const ls = await read($, limits)
     const x = await read($, extras)
-    if (e.props.hasSurvey || (ls.length === 0 && !x.resets && !x.credit)) {
+    if (e.props.hasSurvey || (ls.length === 0 && !x.resets && !x.fable && !x.credit)) {
       return next(e)
     }
     const t = await read($, now)
@@ -73,19 +73,20 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column">
         <Box flexDirection="row" flexWrap="wrap" gap={3}>
-          {ordered(ls).map(l => {
-            const u = untilText(l.resetsAt, t)
+          {ordered(withFiveHour(ls)).map(l => {
+            const isIdle = l.kind === 'five_hour' && !l.resetsAt
+            const u = isIdle ? 'idle, no window running' : untilText(l.resetsAt, t)
             return (
               <Box key={l.kind} flexDirection="row" gap={1}>
                 <Text bold>{label(l.kind)}</Text>
                 <Text color={tone(l.percentUsed)}>{bar(l.percentUsed)}</Text>
                 <Text color={tone(l.percentUsed)} bold>{`${Math.round(l.percentUsed)}%`}</Text>
-                {u ? <Text dimColor>{`resets in ${u}`}</Text> : null}
+                {u ? <Text dimColor>{isIdle ? u : `resets in ${u}`}</Text> : null}
               </Box>
             )
           })}
         </Box>
-        {more ? <Text dimColor>{`${more}  (as you entered${x.updated ? ` ${x.updated}` : ''}; update with /meter)`}</Text> : null}
+        {more ? <Text dimColor>{more}</Text> : null}
       </Box>
     )
   })

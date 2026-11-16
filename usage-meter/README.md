@@ -7,9 +7,10 @@ A row above the Claude prompt box:
 
 The 5-hour and weekly bars update by themselves. Limit resets and cloud credit aren't shared with add-ons, so you type them:
 
-    /meter resets 1 10.22          how many full resets, and when they expire
+    /meter resets 2                how many full resets (add an expiry like 10.22 if you want one)
+    /meter fable 2                 how many Fable resets (expiry optional)
     /meter credit 242 250 11.5     credit left, total, expiry date
-    /meter clear                   remove both
+    /meter clear                   remove everything you entered
 
 Resets and credit drop off the row on their own once their expiry date has passed.
 

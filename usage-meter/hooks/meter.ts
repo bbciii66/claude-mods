@@ -48,7 +48,8 @@ export function line(limits: Limit[], now: number): string {
 
 
 export type Extras = {
-  resets?: { count: number; expires: string }
+  resets?: { count: number; expires?: string }
+  fable?: { count: number; expires?: string }
   credit?: { left: number; total: number; expires: string }
   updated?: string
 }
@@ -88,10 +89,16 @@ export function applyArgs(args: string, extras: Extras, now: number): { extras: 
   const help = 'Use: /meter resets <how many> <expires, e.g. 10.22>   ·   /meter credit <left> <total> <expires, e.g. 11.5>   ·   /meter clear'
   const stamp = new Date(now).toISOString().slice(0, 10)
   if (w[0] === 'clear') return { extras: {}, reply: 'Cleared the resets and credit you entered.' }
-  if (w[0] === 'resets' && w.length >= 3) {
-    const count = Number(w[1]); const exp = parseDate(w.slice(2).join(' '), now)
-    if (!Number.isFinite(count) || count < 0 || !exp) return { extras, reply: help }
-    return { extras: { ...extras, resets: { count, expires: exp }, updated: stamp }, reply: `Saved: ${count} full reset${count === 1 ? '' : 's'}, expires ${expiryText(exp, now)}.` }
+  if ((w[0] === 'resets' || w[0] === 'fable') && w.length >= 2) {
+    const count = Number(w[1])
+    const exp = w.length >= 3 ? parseDate(w.slice(2).join(' '), now) : undefined
+    if (!Number.isFinite(count) || count < 0 || (w.length >= 3 && !exp)) return { extras, reply: help }
+    const entry = exp ? { count, expires: exp } : { count }
+    const name = w[0] === 'fable' ? 'Fable reset' : 'full reset'
+    return {
+      extras: { ...extras, [w[0]]: entry, updated: stamp },
+      reply: `Saved: ${count} ${name}${count === 1 ? '' : 's'}${exp ? `, expires ${expiryText(exp, now)}` : ''}.`,
+    }
   }
   if (w[0] === 'credit' && w.length >= 4) {
     const left = Number(w[1].replace(/[$,]/g, '')); const total = Number(w[2].replace(/[$,]/g, '')); const exp = parseDate(w.slice(3).join(' '), now)
@@ -105,12 +112,21 @@ export function applyArgs(args: string, extras: Extras, now: number): { extras: 
 export function extrasLine(x: Extras, now: number): string {
   const parts: string[] = []
   // Expired items are left off the row; they stay stored until /meter clear or a new entry replaces them.
-  const isLive = (iso: string): boolean => {
+  const isLive = (iso: string | undefined): boolean => {
+    if (!iso) return true
     const [y, m, d] = iso.split('-').map(Number)
     const t = new Date(now)
     return Date.UTC(y, m - 1, d) >= Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate())
   }
-  if (x.resets && isLive(x.resets.expires)) parts.push(`Full resets: ${x.resets.count} · expires ${expiryText(x.resets.expires, now)}`)
-  if (x.credit && isLive(x.credit.expires)) parts.push(`Cloud credit: $${x.credit.left} of $${x.credit.total} · expires ${expiryText(x.credit.expires, now)}`)
+  const tail = (iso: string | undefined) => (iso ? ` · expires ${expiryText(iso, now)}` : '')
+  if (x.resets && isLive(x.resets.expires)) parts.push(`Full resets: ${x.resets.count}${tail(x.resets.expires)}`)
+  if (x.fable && isLive(x.fable.expires)) parts.push(`Fable resets: ${x.fable.count}${tail(x.fable.expires)}`)
+  if (x.credit && isLive(x.credit.expires)) parts.push(`Cloud credit: $${x.credit.left} of $${x.credit.total}${tail(x.credit.expires)}`)
   return parts.join('   ')
+}
+
+/** Shows the 5-hour window even when the API sent none (no window running): idle at 0%. */
+export function withFiveHour(limits: Limit[]): Limit[] {
+  if (limits.length === 0 || limits.some(l => l.kind === 'five_hour')) return limits
+  return [{ kind: 'five_hour', percentUsed: 0 }, ...limits]
 }

@@ -1,6 +1,7 @@
 export type Limit = { kind: string; percentUsed: number; resetsAt?: string }
 export type Extras = {
-  resets?: { count: number; expires: string }
+  resets?: { count: number; expires?: string }
+  fable?: { count: number; expires?: string }
   credit?: { left: number; total: number; expires: string }
   updated?: string
 }

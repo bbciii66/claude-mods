@@ -55,7 +55,7 @@ const stopped = (c: Crab, now: number, mood: string): Crab => ({
   since: 0,
 })
 
-const scene = (mood: string, delay: number, isPaused: boolean) => `<svg class="m-${mood}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+const scene = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
 <style>
   .pulse { animation: pulse 9s ease-in-out infinite; transform-origin: center; }
   .pulse2 { animation: pulse 9s ease-in-out infinite; animation-delay: -4.5s; }
@@ -64,8 +64,6 @@ const scene = (mood: string, delay: number, isPaused: boolean) => `<svg class="m
   .spin { animation: spin 90s linear infinite; transform-origin: 80px 80px; }
   .eye { fill: #f0a47f; animation: blink 7s ease-in-out infinite; transform-origin: center; }
   .line { fill: #d97757; fill-opacity: 0.12; stroke: #d97757; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: 0.75; }
-  .walk { transform-box: fill-box; transform-origin: center; animation: walk 72s ease-in-out infinite; animation-delay: -${delay}s; animation-play-state: ${isPaused ? "paused" : "running"}; }
-  @keyframes walk { 0%, 4% { transform: translateX(0); } 48%, 52% { transform: translateX(950px); } 96%, 100% { transform: translateX(0); } }
   .px { fill: #d97757; fill-opacity: 0.85; }
   .eye2 { fill: #171310; animation: blink 7s ease-in-out infinite; }
   .clawL { animation: snap 3s ease-in-out infinite; transform-box: fill-box; transform-origin: 80% 80%; }
@@ -111,18 +109,6 @@ const scene = (mood: string, delay: number, isPaused: boolean) => `<svg class="m
   <circle class="arc" cx="1660" cy="80" r="240"/>
   <circle class="arc" cx="1660" cy="80" r="340"/>
 </g>
-<svg x="0" y="74.5%" width="100%" height="11%" viewBox="0 0 1600 110" preserveAspectRatio="xMinYMax meet">
-  <g class="walk"><g class="bob"><g transform="translate(300,65) scale(0.35)">
-    <g class="clawL"><rect class="px" x="12" y="30" width="26" height="26"/><rect class="px" x="12" y="30" width="10" height="12" fill-opacity="0.4"/><rect class="px" x="30" y="52" width="14" height="8"/></g>
-    <g class="clawR"><rect class="px" x="122" y="30" width="26" height="26"/><rect class="px" x="138" y="30" width="10" height="12" fill-opacity="0.4"/><rect class="px" x="116" y="52" width="14" height="8"/></g>
-    <rect class="px" x="40" y="40" width="80" height="46"/>
-    <rect class="eye2" x="58" y="52" width="10" height="14"/>
-    <rect class="eye2" x="92" y="52" width="10" height="14"/>
-        <g class="bubble"><rect class="px" x="128" y="4" width="6" height="6"/><rect class="px" x="138" y="-8" width="10" height="10"/><rect class="px" fill-opacity="0.18" x="130" y="-50" width="64" height="38"/><rect class="d1 px" x="140" y="-34" width="8" height="8"/><rect class="d2 px" x="156" y="-34" width="8" height="8"/><rect class="d3 px" x="172" y="-34" width="8" height="8"/></g>
-    <g><rect class="spark" x="6" y="6" width="8" height="8"/><rect class="spark" x="146" y="0" width="8" height="8"/><rect class="spark" x="76" y="-14" width="8" height="8"/></g>
-    <g class="legs"><rect class="px" x="46" y="86" width="8" height="14"/><rect class="px" x="62" y="86" width="8" height="14"/><rect class="px" x="90" y="86" width="8" height="14"/><rect class="px" x="106" y="86" width="8" height="14"/></g>
-    </g></g></g>
-</svg>
 <svg x="66%" y="2%" width="15%" height="30%" viewBox="0 0 160 160" preserveAspectRatio="xMaxYMin meet">
   <g class="spin">
     <g class="line" fill="none" stroke-width="4">
@@ -133,6 +119,44 @@ const scene = (mood: string, delay: number, isPaused: boolean) => `<svg class="m
     <circle class="line" cx="80" cy="80" r="9"/>
   </g>
 </svg>
+</svg>`
+
+const crabStrip = (mood: string, delay: number, isPaused: boolean) => `<svg class="m-${mood}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 50">
+<style>
+  .walk { transform-box: fill-box; transform-origin: center; animation: walk 72s ease-in-out infinite; animation-delay: -${delay}s; animation-play-state: ${isPaused ? 'paused' : 'running'}; }
+  @keyframes walk { 0%, 4% { transform: translateX(0); } 48%, 52% { transform: translateX(760px); } 96%, 100% { transform: translateX(0); } }
+  .px { fill: #d97757; fill-opacity: 0.9; }
+  .eye2 { fill: #171310; animation: blink 7s ease-in-out infinite; }
+  .bob { animation: bob 6s ease-in-out infinite; }
+  .clawL { animation: snap 3s ease-in-out infinite; transform-box: fill-box; transform-origin: 80% 80%; }
+  .clawR { animation: snap 3s ease-in-out infinite; animation-delay: -1.5s; transform-box: fill-box; transform-origin: 20% 80%; }
+  @keyframes snap { 0%, 80%, 100% { transform: rotate(0deg); } 90% { transform: rotate(-12deg); } }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes blink { 0%, 94%, 100% { opacity: 0.9; } 97% { opacity: 0.15; } }
+  .bubble { opacity: 0; }
+  .m-ponder .bubble { opacity: 0.9; }
+  .d1, .d2, .d3 { animation: dot 1.8s ease-in-out infinite; }
+  .d2 { animation-delay: 0.3s; } .d3 { animation-delay: 0.6s; }
+  @keyframes dot { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+  .m-ponder .bob { animation: none; }
+  .m-ponder .clawL { animation: none; transform: rotate(-35deg); }
+  .m-ponder .eye2 { transform: translateY(-4px); animation: none; }
+  .m-cheer .bob { animation: hop 0.55s ease-out 6; }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-26px); } 70% { transform: translateY(0); } 85% { transform: translateY(-5px); } }
+  .spark { opacity: 0; fill: #f0a47f; }
+  .m-cheer .spark { animation: tw 0.55s ease-out 6; }
+  @keyframes tw { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 0; } }
+</style>
+<g class="walk"><g class="bob"><g transform="translate(40,16) scale(0.34)">
+  <g class="clawL"><rect class="px" x="12" y="30" width="26" height="26"/><rect class="px" x="12" y="30" width="10" height="12" fill-opacity="0.4"/><rect class="px" x="30" y="52" width="14" height="8"/></g>
+  <g class="clawR"><rect class="px" x="122" y="30" width="26" height="26"/><rect class="px" x="138" y="30" width="10" height="12" fill-opacity="0.4"/><rect class="px" x="116" y="52" width="14" height="8"/></g>
+  <rect class="px" x="40" y="40" width="80" height="46"/>
+  <rect class="eye2" x="58" y="52" width="10" height="14"/>
+  <rect class="eye2" x="92" y="52" width="10" height="14"/>
+  <g class="bubble"><rect class="px" x="128" y="4" width="6" height="6"/><rect class="px" x="138" y="-8" width="10" height="10"/><rect class="px" fill-opacity="0.18" x="130" y="-50" width="64" height="38"/><rect class="d1 px" x="140" y="-34" width="8" height="8"/><rect class="d2 px" x="156" y="-34" width="8" height="8"/><rect class="d3 px" x="172" y="-34" width="8" height="8"/></g>
+  <g><rect class="spark" x="6" y="6" width="8" height="8"/><rect class="spark" x="146" y="0" width="8" height="8"/><rect class="spark" x="76" y="-14" width="8" height="8"/></g>
+  <g><rect class="px" x="46" y="86" width="8" height="14"/><rect class="px" x="62" y="86" width="8" height="14"/><rect class="px" x="90" y="86" width="8" height="14"/><rect class="px" x="106" y="86" width="8" height="14"/></g>
+</g></g></g>
 </svg>`
 
 export const register: Register = on => {
@@ -176,10 +200,29 @@ export const register: Register = on => {
     }
 
     const { Svg } = $.ui.resolve(e)
+
+    return <Svg source={scene()} alt="A soft orange glow slowly pulsing at the corners" isInteractive />
+  })
+
+  // The crab lives in its own strip right above the usage row, so it stays on the bar at any window size.
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    if ((e.surface !== 'desktop' && e.surface !== 'mobile') || !(e.plugin ?? '').startsWith('ember-glow') || e.props.hasSurvey) {
+      return next(e)
+    }
+
+    const { Svg } = $.ui.resolve(e)
     const c = await read($, crab)
     const now = await $.clock.now()
     const walked = c.since === 0 ? c.walked : (c.walked + (now - c.since) / 1000) % WALK_SECONDS
 
-    return <Svg source={scene(c.mood, walked, c.since === 0)} alt="A soft orange glow slowly pulsing at the corners" isInteractive />
+    return <Svg source={crabStrip(c.mood, walked, c.since === 0)} alt="A small pixel crab walking along the usage bar" width={900} height={50} isInteractive />
+  })
+
+  // Put the crab strip above the other rows (the usage meter's), so it stands on top of them.
+  on('ui.render', { component: 'AbovePromptList' }, async ($, e, next) => {
+    const mine = e.props.rows.filter(r => r.plugin.startsWith('ember-glow'))
+    const others = e.props.rows.filter(r => !r.plugin.startsWith('ember-glow'))
+
+    return next({ ...e, props: { ...e.props, rows: [...mine, ...others] } })
   })
 }
